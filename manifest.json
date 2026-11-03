@@ -1,0 +1,16 @@
+{
+  "name": "Encuesta de capacitación MRT",
+  "short_name": "Encuesta MRT",
+  "description": "Encuesta de necesidades de capacitación de Minera Río Tinto.",
+  "lang": "es-MX",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#131418",
+  "theme_color": "#131418",
+  "icons": [
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
