@@ -73,6 +73,9 @@ textarea { width: 100%; height: 110px; font: .8rem monospace; color: var(--fg); 
 .marca > div { flex: 1 1 170px; min-width: 0 }
 .marca h1 { font-size: 1.85rem }
 .marca p { color: var(--band-sub); font-size: .9rem; margin-top: 4px }
+.guardadas { background: var(--panel); border: 2px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 10px }
+.cifra { display: flex; align-items: center; gap: 12px; font-weight: 600 }
+.numero { font: 700 3rem/1 var(--display); color: var(--accent); font-variant-numeric: tabular-nums }
 @media (prefers-reduced-motion: reduce) { .bar i { transition: none } }
 </style>
 </head>
@@ -116,15 +119,17 @@ var LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAADKCAYAAADqxTSrAA
 
 /* Las respuestas quedan en el teléfono solo hasta que se envían. */
 var CLAVE = "encuesta-dnc-mrt-pendientes-v1", guardaOk = true, enviando = false;
-var db = { unidad: "", pendientes: [] };
+var db = { unidad: "", pendientes: [], subidas: 0 };
 try {
   var previo = localStorage.getItem(CLAVE);
   if (previo) db.pendientes = JSON.parse(previo) || [];
+  db.subidas = Number(localStorage.getItem(CLAVE + "-subidas")) || 0;
 } catch (e) { guardaOk = false; }
 function guardar() {
   try {
     if (db.pendientes.length) localStorage.setItem(CLAVE, JSON.stringify(db.pendientes));
     else localStorage.removeItem(CLAVE);
+    localStorage.setItem(CLAVE + "-subidas", String(db.subidas));
     guardaOk = true;
   } catch (e) { guardaOk = false; }
 }
@@ -318,6 +323,33 @@ function numero(p) {
     el("button", { "class": "primary", text: "Continuar", on: function () { r[p.k] = v; avanzar(); } })
   ];
 }
+function panelGuardadas(mensaje) {
+  var n = db.pendientes.length;
+  var trabajadores = db.pendientes.filter(function (p) { return p.tipo === "T"; }).length;
+  var caja = el("section", { "class": "guardadas", id: "guardadas" }, [
+    el("div", { "class": "cifra" }, [
+      el("span", { "class": "numero", id: "conteo", text: String(n) }),
+      el("span", { text: n === 1 ? "encuesta guardada en este teléfono" : "encuestas guardadas en este teléfono" })
+    ]),
+    n ? el("p", { "class": "small muted", text: "Trabajadores: " + trabajadores + " · Temas de jefes: " + (n - trabajadores) }) : null,
+    el("p", { "class": "small muted", id: "subidas", text: "Ya subidas desde este teléfono: " + db.subidas }),
+    mensaje ? el("p", { "class": mensaje.ok ? "ok" : "notice", id: "mensaje", text: mensaje.texto }) : null
+  ]);
+  var boton = el("button", { "class": "primary", id: "actualizar", text: "Actualizar", on: function () {
+    var antes = db.pendientes.length;
+    boton.disabled = true; boton.textContent = "Subiendo…";
+    enviarPendientes(function (ok) {
+      var hechas = antes - db.pendientes.length, faltan = db.pendientes.length, resultado;
+      if (ok) resultado = { ok: true, texto: "Listo. Se " + (hechas === 1 ? "subió 1 encuesta." : "subieron " + hechas + " encuestas.") };
+      else if (hechas) resultado = { ok: false, texto: "Se subieron " + hechas + " y faltan " + faltan + ". Toca Actualizar con mejor señal." };
+      else resultado = { ok: false, texto: "Sin señal. Tus encuestas siguen guardadas en este teléfono." };
+      caja.replaceWith(panelGuardadas(resultado));
+    });
+  } });
+  boton.disabled = !n;
+  caja.appendChild(boton);
+  return caja;
+}
 function enviarPendientes(alTerminar) {
   alTerminar = alTerminar || function () {};
   if (!db.pendientes.length) { alTerminar(true); return; }
@@ -332,33 +364,20 @@ function enviarPendientes(alTerminar) {
       enviando = false;
       var listos = (res && res.folios) || [];
       if (!listos.length) { alTerminar(false); return; }
+      var antes = db.pendientes.length;
       db.pendientes = db.pendientes.filter(function (p) { return listos.indexOf(p.fila[0]) < 0; });
+      db.subidas += antes - db.pendientes.length;
       guardar();
       if (db.pendientes.length) enviarPendientes(alTerminar); else alTerminar(true);
     })
     .catch(function () { clearTimeout(limite); enviando = false; alTerminar(false); });
-}
-function estadoEnvio() {
-  var caja = el("div", { style: "display:grid;gap:10px" });
-  function intenta() {
-    caja.textContent = "";
-    caja.appendChild(el("p", { "class": "muted", text: "Subiendo respuesta…" }));
-    enviarPendientes(function (ok) {
-      caja.textContent = "";
-      if (ok) { caja.appendChild(el("p", { "class": "ok", text: "Respuesta subida." })); return; }
-      caja.appendChild(el("p", { "class": "notice", text: "Guardada en este teléfono. Se subirá cuando haya señal y abras la app." }));
-      caja.appendChild(el("button", { "class": "second", text: "Reintentar envío", on: intenta }));
-    });
-  }
-  intenta();
-  return caja;
 }
 function terminar() {
   if (modo === "T") {
     var t = r.temas || [];
     db.pendientes.push({ tipo: "T", fila: [folio("T"), r.unidad, r.area, r.puesto, r.turno, t[0] || "", t[1] || "", t[2] || "", r.otro || "", r.dominar, r.dificil, r.crecer, r.aprende, r.horario, r.nombre || "", r.telefono || ""] });
     guardar();
-    pintar([ aviso(), el("h1", { text: "Gracias por participar" }), estadoEnvio(),
+    pintar([ aviso(), el("h1", { "class": "ok", text: "Listo, guardada en tu teléfono" }), panelGuardadas(),
       el("button", { "class": "second", text: "Responder otra encuesta", on: function () { iniciar("T"); } }), el("button", { "class": "second", text: "Terminar", on: inicio }) ]);
     return;
   }
@@ -371,7 +390,7 @@ function terminar() {
     r = base;
     flujo = saltar ? P_CICLO : P_PUESTO_J.concat(P_CICLO); i = -1; avanzar();
   }
-  pintar([ aviso(), el("h1", { text: "Tema registrado" }), el("p", { "class": "muted", text: hechos + " · " + r.tema }), estadoEnvio(),
+  pintar([ aviso(), el("h1", { "class": "ok", text: "Listo, tema guardado en tu teléfono" }), el("p", { "class": "muted", text: hechos + " · " + r.tema }), panelGuardadas(),
     el("button", { "class": "primary", text: "Otro tema para este puesto", on: function () { otraVez(true); } }),
     el("button", { "class": "second", text: "Otro puesto", on: function () { otraVez(false); } }),
     el("button", { "class": "second", text: "Terminar", on: inicio }) ]);
@@ -389,20 +408,11 @@ function inicio() {
       el("button", { "class": "tile", id: "ir-jefe", on: function () { iniciar("J"); } }, [ el("span", {}, [ document.createTextNode("Jefe o supervisor"), el("small", { text: "Tus datos y 9 preguntas por tema" }) ]) ])
     ])
   ];
-  if (db.pendientes.length) {
-    kids.push(el("p", { "class": "notice", id: "pendientes", text: "Por subir en este teléfono: " + db.pendientes.length }));
-    kids.push(el("button", { "class": "second", id: "enviar-pendientes", text: "Subir ahora", on: function () { enviarPendientes(inicio); } }));
-  }
+  if (db.pendientes.length || db.subidas) kids.push(panelGuardadas());
   if (!instalada()) kids.push(bloqueInstalar());
   pintar(kids);
 }
 function enInicio() { return !!document.getElementById("ir-trabajador"); }
-function sincronizar() {
-  if (!db.pendientes.length) return;
-  enviarPendientes(function () { if (enInicio()) inicio(); });
-}
-window.addEventListener("online", sincronizar);
-document.addEventListener("visibilitychange", function () { if (!document.hidden) sincronizar(); });
 
 /* Instalación en la pantalla de inicio. */
 var avisoInstalar = null;
@@ -425,6 +435,8 @@ window.addEventListener("beforeinstallprompt", function (e) {
 });
 window.addEventListener("appinstalled", function () { avisoInstalar = null; if (enInicio()) inicio(); });
 if ("serviceWorker" in navigator) {
+  var teniaVersion = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", function () { if (teniaVersion && enInicio()) location.reload(); });
   window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
 }
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
@@ -434,7 +446,6 @@ function pintar(kids) {
   window.scrollTo(0, 0);
 }
 inicio();
-sincronizar();
 </script>
 
 </body>
