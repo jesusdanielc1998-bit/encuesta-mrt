@@ -124,14 +124,20 @@ var LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAADKCAYAAADqxTSrAA
 
 /* Las respuestas quedan en el teléfono solo hasta que se envían. */
 var CLAVE = "encuesta-dnc-mrt-pendientes-v1", guardaOk = true, enviando = false;
-var VERSION_APP = "Versión 6 · 5 de noviembre de 2026";
+var VERSION_APP = "Versión 7 · 5 de noviembre de 2026";
+/* Un avance descargado antes de esta fecha trae metas viejas y se descarta. Súbela cuando cambien las metas. */
+var METAS_DESDE = "2026-11-05T19:40:00.000Z";
 var db = { unidad: "", pendientes: [], subidas: 0, avance: null };
-var ultimoMensaje = null;
+var ultimoMensaje = null, errorAvance = "";
 try {
   var previo = localStorage.getItem(CLAVE);
   if (previo) db.pendientes = JSON.parse(previo) || [];
   db.subidas = Number(localStorage.getItem(CLAVE + "-subidas")) || 0;
   db.avance = JSON.parse(localStorage.getItem(CLAVE + "-avance") || "null");
+  if (db.avance && !(db.avance.fecha && db.avance.fecha >= METAS_DESDE)) {
+    db.avance = null;
+    localStorage.removeItem(CLAVE + "-avance");
+  }
 } catch (e) { guardaOk = false; }
 function guardar() {
   try {
@@ -481,20 +487,22 @@ function pantallaMetas() {
     ]) ]));
   });
   kids.push(el("p", { "class": "small muted", text: "Solo cuenta trabajadores. Las metas se pueden cambiar en la pestaña Metas de la hoja de Google." }));
+  if (errorAvance) kids.push(el("p", { "class": "small notice", id: "error-avance", text: "Último intento de descarga: " + errorAvance }));
   kids.push(el("p", { "class": "small muted", text: VERSION_APP }));
   pintar(kids);
 }
 function actualizarAvance(alTerminar) {
-  if (navigator.onLine === false) { alTerminar(false); return; }
+  if (navigator.onLine === false) { errorAvance = "El teléfono indica que no hay internet."; alTerminar(false); return; }
   var control = new AbortController(), limite = setTimeout(function () { control.abort(); }, 30000);
-  fetch(URL_ENVIO + "?accion=avance", { redirect: "follow", signal: control.signal })
-    .then(function (resp) { if (!resp.ok) throw new Error("Sin respuesta"); return resp.json(); })
+  fetch(URL_ENVIO + "?accion=avance&t=" + Date.now(), { redirect: "follow", cache: "no-store", signal: control.signal })
+    .then(function (resp) { if (!resp.ok) throw new Error("El servidor respondió " + resp.status); return resp.json(); })
     .then(function (res) {
       clearTimeout(limite);
-      if (!res || !res.filas) { alTerminar(false); return; }
+      if (!res || !res.filas) { errorAvance = "La respuesta no trae metas."; alTerminar(false); return; }
+      errorAvance = "";
       db.avance = res; guardar(); alTerminar(true);
     })
-    .catch(function () { clearTimeout(limite); alTerminar(false); });
+    .catch(function (e) { clearTimeout(limite); errorAvance = (e && e.name === "AbortError") ? "Tardó demasiado en responder." : "No se pudo descargar (" + ((e && e.message) || "error") + ")."; alTerminar(false); });
 }
 function enInicio() { return !!document.getElementById("ir-trabajador"); }
 
