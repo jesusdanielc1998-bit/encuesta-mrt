@@ -1,5 +1,5 @@
 /* Guarda la app en el teléfono para que abra sin internet. Cambia VERSION al publicar cambios. */
-var VERSION = "encuesta-mrt-v5";
+var VERSION = "encuesta-mrt-v6";
 var ARCHIVOS = ["./", "./index.html", "./manifest.json", "./icono-192.png", "./icono-512.png"];
 
 self.addEventListener("install", function (e) {

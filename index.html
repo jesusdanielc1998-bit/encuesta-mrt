@@ -124,6 +124,7 @@ var LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAADKCAYAAADqxTSrAA
 
 /* Las respuestas quedan en el teléfono solo hasta que se envían. */
 var CLAVE = "encuesta-dnc-mrt-pendientes-v1", guardaOk = true, enviando = false;
+var VERSION_APP = "Versión 6 · 5 de noviembre de 2026";
 var db = { unidad: "", pendientes: [], subidas: 0, avance: null };
 var ultimoMensaje = null;
 try {
@@ -435,6 +436,7 @@ function inicio() {
   ]) ]));
   if (db.pendientes.length || db.subidas || ultimoMensaje) kids.push(panelGuardadas());
   if (!instalada()) kids.push(bloqueInstalar());
+  kids.push(el("p", { "class": "small muted", id: "version-app", text: VERSION_APP }));
   pintar(kids);
 }
 function filasMeta() {
@@ -479,6 +481,7 @@ function pantallaMetas() {
     ]) ]));
   });
   kids.push(el("p", { "class": "small muted", text: "Solo cuenta trabajadores. Las metas se pueden cambiar en la pestaña Metas de la hoja de Google." }));
+  kids.push(el("p", { "class": "small muted", text: VERSION_APP }));
   pintar(kids);
 }
 function actualizarAvance(alTerminar) {
