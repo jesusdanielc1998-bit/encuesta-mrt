@@ -1,6 +1,7 @@
 /* Guarda la app en el teléfono para que abra sin internet. Cambia VERSION al publicar cambios. */
-var VERSION = "encuesta-mrt-v7";
-var ARCHIVOS = ["./", "./index.html", "./manifest.json", "./icono-192.png", "./icono-512.png"];
+var VERSION = "encuesta-mrt-v8";
+var ARCHIVOS = ["./", "./index.html", "./manifest.json", "./icono-192.png", "./icono-512.png",
+  "./icono-maskable-192.png", "./icono-maskable-512.png", "./apple-touch-icon.png", "./favicon-48.png"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(ARCHIVOS.map(function (a) { return new Request(a, { cache: "reload" }); })); }).then(function () { return self.skipWaiting(); }));

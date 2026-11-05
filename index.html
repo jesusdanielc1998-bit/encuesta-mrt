@@ -6,9 +6,24 @@
 <meta name="theme-color" content="#131418">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Encuesta MRT">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="description" content="Encuesta de necesidades de capacitación de Minera Río Tinto S.A. de C.V. Preguntas rápidas, sin escribir. Funciona sin internet.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Minera Río Tinto S.A. de C.V.">
+<meta property="og:title" content="Encuesta de capacitación · Minera Río Tinto">
+<meta property="og:description" content="Ayúdanos a saber qué capacitación necesitas. Preguntas rápidas, sin escribir. Funciona sin internet.">
+<meta property="og:url" content="https://jesusdanielc1998-bit.github.io/encuesta-mrt/">
+<meta property="og:image" content="https://jesusdanielc1998-bit.github.io/encuesta-mrt/vista-previa.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logo de Minera Río Tinto y el texto Encuesta de capacitación">
+<meta property="og:locale" content="es_MX">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icono-192.png">
-<title>Encuesta MRT</title>
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<title>Encuesta de capacitación · Minera Río Tinto</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
 /* Layout: una pregunta por pantalla, con botones grandes para usarse de pie y con guantes. */
@@ -124,7 +139,7 @@ var LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAADKCAYAAADqxTSrAA
 
 /* Las respuestas quedan en el teléfono solo hasta que se envían. */
 var CLAVE = "encuesta-dnc-mrt-pendientes-v1", guardaOk = true, enviando = false;
-var VERSION_APP = "Versión 7 · 5 de noviembre de 2026";
+var VERSION_APP = "Versión 8 · 5 de noviembre de 2026";
 /* Un avance descargado antes de esta fecha trae metas viejas y se descarta. Súbela cuando cambien las metas. */
 var METAS_DESDE = "2026-11-05T19:40:00.000Z";
 var db = { unidad: "", pendientes: [], subidas: 0, avance: null };
