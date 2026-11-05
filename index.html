@@ -527,6 +527,17 @@ function pintar(kids) {
   window.scrollTo(0, 0);
 }
 inicio();
+/* Al abrir con señal, o al recuperarla, descarga las metas y el avance para no mostrar datos viejos. */
+function refrescarAvance() {
+  if (enviando) return;
+  actualizarAvance(function (ok) {
+    if (!ok) return;
+    if (document.getElementById("pantalla-metas")) pantallaMetas();
+    else if (enInicio()) inicio();
+  });
+}
+refrescarAvance();
+window.addEventListener("online", refrescarAvance);
 </script>
 
 </body>
